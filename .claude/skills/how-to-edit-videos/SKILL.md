@@ -1,6 +1,6 @@
 ---
 name: how-to-edit-videos
-description: Edit Marlon's talking-head videos into polished short-form ads (Facebook / Instagram / Reels) using HyperFrames — Hormozi-style word-by-word captions, motion graphics that punctuate narrative pivots, AI-generated full-frame story images (graphs, rank maps, stat cards) via the kie.ai gpt-image-2 API, and a ghosted speaker behind full-frame graphics for continuity. Use this skill alongside the `hyperframes` skill whenever the user asks to edit, caption, subtitle, add motion graphics, or add image takeovers to a talking-head video, especially for paid social ads (Facebook ads, Instagram ads, Reels), explainer ads, lead-gen video ads, or any video aimed at healthcare practice owners (dentists, chiropractors, podiatrists, PTs). Trigger on phrases like "make a Facebook ad from this video", "add Hormozi-style subtitles", "edit this talking-head video", "add motion graphics to this", "add images to this video", "9:16 ad", "social ad video", or whenever the user provides a raw .mp4 of themselves talking and wants it turned into a finished ad. Use even when the user doesn't explicitly say "Hormozi" or "Facebook" — if the input is a talking-head video and the goal is a short-form ad, this skill applies.
+description: Edit Marlon's talking-head videos into polished short-form ads (Facebook / Instagram / Reels) using HyperFrames — Hormozi-style word-by-word captions, motion graphics that punctuate narrative pivots, AI-generated full-frame story images (graphs, rank maps, stat cards) via the kie.ai gpt-image-2 API. Speaker stays at full brightness throughout — each MG block uses its own dark plate for contrast. Use this skill alongside the `hyperframes` skill whenever the user asks to edit, caption, subtitle, add motion graphics, or add image takeovers to a talking-head video, especially for paid social ads (Facebook ads, Instagram ads, Reels), explainer ads, lead-gen video ads, or any video aimed at healthcare practice owners (dentists, chiropractors, podiatrists, PTs). Trigger on phrases like "make a Facebook ad from this video", "add Hormozi-style subtitles", "edit this talking-head video", "add motion graphics to this", "add images to this video", "9:16 ad", "social ad video", or whenever the user provides a raw .mp4 of themselves talking and wants it turned into a finished ad. Use even when the user doesn't explicitly say "Hormozi" or "Facebook" — if the input is a talking-head video and the goal is a short-form ad, this skill applies.
 ---
 
 # How to edit Marlon's videos
@@ -34,7 +34,7 @@ What that means concretely:
 - **`<video>` runs from `data-start="0"` for the full source duration.** No `data-end`, no trims, no clip splicing.
 - **`<audio>` runs from `data-start="0"` for the full source duration with `data-volume="1"`.** Never tween audio volume. Never insert silence. Never overlay music or VO. Never remove "dead air" or pauses.
 - **Word-level captions follow the actual transcript end-time.** If whisper's transcript extends past the source's real audio (it sometimes hallucinates a trailing word), trim the *last caption group only* so its `e` ≤ the source's audio duration. Do not edit any earlier captions. Do not retime words.
-- **Motion graphic windows are additive overlays on top of the video.** They never replace, mute, or skip a portion of the source — the speaker is always playing underneath at ghost opacity.
+- **Motion graphic windows are additive overlays on top of the video.** They never replace, mute, or skip a portion of the source — the speaker is always playing underneath at full brightness.
 - **No transitions that shorten the source.** No cut-to-black between sections, no jump-cuts to remove pauses, no playback-rate changes. The viewer sees the full take.
 
 **Verification (do this every time before handing off):**
@@ -75,11 +75,11 @@ Marlon's videos are direct-response **talking-head** ads. The face is the produc
 
 Three principles that all the rules below derive from:
 
-1. **The face creates trust. The speaker is the spine of the ad.** The viewer should keep returning to the face — but no fixed coverage % is prescribed. Speaker share emerges from cadence + beat-length rules below. What matters is *distribution*: the speaker is never left alone on screen for more than **8 seconds at a stretch** after t=10s. Long ghosted stretches where the viewer can barely see Marlon defeat the entire point of a talking-head ad.
+1. **The face creates trust. The speaker is the spine of the ad.** The viewer should keep returning to the face — but no fixed coverage % is prescribed. Speaker share emerges from cadence + beat-length rules below. What matters is *distribution*: the speaker is never left alone on screen for more than **8 seconds at a stretch** after t=10s.
 2. **Captions are the fallback for sound-off scrolling.** Most Facebook viewers watch muted on first scroll. Captions must be readable, on-brand, and never cover the speaker's face. They are visible during ALL speaker-only stretches.
 3. **Motion graphics punctuate, they don't decorate.** Each one lands on a narrative pivot (a niche reveal, a contrast, a stamp, a payoff, a CTA). Brief — 1.5–5s typically. If a beat doesn't have an underlying narrative reason, don't add it. If you're tempted to add a beat just to "fill space" — that's the bug, leave the speaker alone.
 
-When MG IS active, the speaker stays *ghosted* in the background at **~55% opacity** with a **light dim overlay (~50–60% alpha)** so they're clearly visible, not a vague silhouette. Marlon validated 22% was too dim and 90% MG coverage was unwatchable.
+When MG IS active, the speaker stays at **full brightness (opacity 1.0)** — no dim, no curtain, no fade. Each MG block carries its own dark plate (`rgba(10,10,14,0.82)` rounded card) so the copy reads cleanly against the bright video without touching the speaker's opacity at all.
 
 ## Pre-build interview (always do this)
 
@@ -224,64 +224,110 @@ After any change to caption layout, scrub the studio at a known speaker-only tim
 
 The helper script at `scripts/build_caption_groups.py` reads a HyperFrames transcript and produces the `groups.json` array ready to embed in the composition. Use it — don't hand-write groups.
 
-## Motion graphic system: ghosted speaker + variable beats
+## Motion graphic system: full-brightness speaker + variable beats
 
 The mechanic Marlon validated:
 
-- **Video stays clearly visible** behind motion graphics. Drop video opacity to **~0.55** (NOT 0, NOT 0.22). At 0.55 the speaker reads as a real person on screen, not a faint ghost.
-- **Use a light dim overlay** between the video and the MG content — a radial-ish gradient with alpha around `0.45–0.60` (NOT solid). This takes the edge off the video brightness so the MG copy pops, without obliterating the speaker.
-- **Concrete starting values that work:**
+- **Video stays at full brightness throughout.** `#a-roll` opacity = 1.0 for the entire video — do NOT tween it. No curtain, no dim, no overlay on the video element.
+- **Each MG block carries its own dark plate** to make copy readable against the bright background:
   ```css
-  /* curtain */
-  background: radial-gradient(ellipse at 50% 50%, rgba(20,20,28,0.45) 0%, rgba(5,5,5,0.65) 80%);
+  .mg-plate {
+    background: rgba(10, 10, 14, 0.82);
+    border: 3px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 28px 36px;
+    box-shadow: 0 18px 0 rgba(0, 0, 0, 0.55);
+  }
   ```
-  ```js
-  /* tween */
-  tl.to("#a-roll", { opacity: 0.55, ... }, p.s);
-  ```
-  Tune from here — never go below ~0.45 video opacity.
-- **MG content prefers the lower half of the safe zone — keep the speaker's head clear.** Default to anchoring MG blocks at `top: 900–1100px` so the face stays visible above. Only cover the head when the content genuinely doesn't fit below. This applies especially to the CTA block — the speaker's face during the close-out is high-trust real estate; don't bury it under bullets.
-- **Captions hide** during MG windows (parent container opacity → 0).
+  Tune the alpha (0.75–0.92) per beat. Solid-color plates (red, green, yellow at lower alpha) are also fine — Hormozi-style. Never let MG text sit directly on bright video with no plate.
+- **MG content anchors at `top ≥ 960`** — lower half of the safe zone only. The speaker's head is never covered.
+- **Captions hide** during MG windows (parent container opacity → 0 + skip tween creation for groups inside MG windows).
 - **Audio NEVER fades.** The voice is the spine. Audio runs from `0` to end of clip, untouched.
 
-### Timing — anchor every MG to its spoken words (HARD RULE)
+### Timing — anchor every visual to its PUNCHLINE phrase (HARD RULE)
 
-The most common shipped bug is MG that enters before the lead-in finishes and exits as the punchline begins — the speaker says a word and the corresponding visual is already gone. Every MG window must be timed off the transcript:
+The most common shipped bug is MG/cutaway that enters on the lead-in and exits before the punchline lands — the speaker finally says the matching phrase and the visual is already gone. Every visual window (MG OR cutaway image) must be timed off the transcript using the **punchline-coverage test**.
 
-1. **Entrance — on the word.** Each sub-element's GSAP tween starts AT the corresponding spoken word's start time (not before, not after). The ~0.15-0.3s `back.out` ease completes just after the word is said, so it reads as a sync'd visual punch. Don't lead with eyebrow before the speaker says the eyebrow phrase; don't drop the headline in mid-buildup.
-2. **Exit — 0.7s past the LAST relevant word.** The MG window holds for ≥0.7s after the last spoken word the MG visually represents — including any **footer** phrases that mirror trailing speaker lines. Compute `p.e = last_word_end + 0.7`. (0.7s = ~3 word-reads of dwell time without going stale.)
-3. **Footer text animates in as a block** the moment its first corresponding spoken word lands. Never word-by-word — captions already do that and word-by-word footer competes.
-4. **Window start = first relevant word's `start`.** Don't pre-buildup. If the eyebrow says "Their entire business model", `data-start` = the moment "Their" starts.
-5. **Adjacent beats must MERGE into one MG window** when there's no speaker-only breath between them. Bouncing the curtain between back-to-back payloads strobes the speaker's brightness AND forces you to violate the 0.7s tail rule. Instead: one continuous curtain, content cross-fades inside.
+**The punchline-coverage test (BLOCKING — every beat must pass):**
+
+For each beat, identify the **key phrase**: the actual spoken words that the visual's headline / on-image text encodes. Then verify:
+
+```
+data-start ≤ key_phrase.start_time
+data-start + data-duration ≥ key_phrase.end_time + 0.3s
+```
+
+If either inequality fails, the beat is misaligned — re-anchor the window OR rewrite the visual text to match what's actually spoken in the chosen window.
+
+**Lead-in vs. punchline (this is where agents go wrong).** The "key phrase" is NOT the start of the relevant *sentence* — it's the words the visual literally represents.
+
+> Speaker: "The Google ads cost per click crept up every quarter until **the math stopped working**."
+> Visual text: "MATH STOPPED WORKING"
+> ❌ Wrong anchor: `data-start = 30.34` (when "The Google" starts — the lead-in)
+> ✓ Right anchor: window must cover **33.76–35.34** (when "math stopped working" is actually said)
+
+The full sentence is the lead-in. The punchline is the slice of words the on-screen text mirrors. Anchor to the punchline.
+
+**Identifying the key phrase:**
+- **MG with eyebrow + headline + sub:** the **headline** is the key phrase. Eyebrow/sub are decoration; headline is what must be matched.
+- **Cutaway image with on-image text:** the on-image text is the key phrase (e.g. "MATH STOPPED WORKING", "LOCAL SEARCH IS FREE", "KEEPS RUNNING WITHOUT US").
+- **Stat stamp:** the stat itself (e.g. "76%") is the key phrase.
+- **CTA block:** the imperative ("CLICK BELOW") is the key phrase.
+
+**The five rules:**
+
+1. **Punchline coverage (above) is BLOCKING.** No beat ships without passing.
+2. **Entrance — on the punchline word.** GSAP entrance tween starts AT or just before `key_phrase.start`. The ~0.15–0.3s `back.out` ease completes just after the punchline word lands, so it reads as a sync'd visual punch.
+3. **Exit — ≥0.3s past the last punchline word, plus 0.4s for fade-out.** Compute `data-duration = (key_phrase.end + 0.7) - data-start`. (0.7s tail = 0.3s readable hold + 0.4s fade-out.)
+4. **Footer text animates as a block** the moment its corresponding spoken phrase begins. Never word-by-word — captions already do that.
+5. **Adjacent beats must MERGE into one window** when there's no speaker-only breath between them. Bouncing between back-to-back payloads forces a tail violation. Instead: one continuous window with content cross-fading inside.
+
+**If the punchline phrase doesn't fit the chosen window, you have THREE options (in order of preference):**
+
+1. **Move the window** to cover the punchline phrase. Update neighboring beats if needed to keep the gap rule.
+2. **Rewrite the visual's text** to match the spoken phrase that IS in the window (e.g. change "KEEPS RUNNING WITHOUT US" → "REVIEW SYSTEM ON AUTOPILOT" if the window lands on "review system that runs on autopilot"). Re-generate the image if it's a cutaway.
+3. **Drop the beat.** A misaligned visual is worse than no visual.
+
+**Conflict with the 2.5s gap rule.** When two narrative pivots land within 2.5s of each other, punchline-coverage WINS. Visuals follow the speaker's pacing, not the gap rule. The gap rule is a soft target; punchline coverage is BLOCKING.
 
 **Workflow when timing a beat list:**
-- For each beat, write the **first relevant word's start** and the **last relevant word's end** in the comment.
-- Compute `data-start` and `data-duration = (last_end + 0.7) - data-start`.
-- Walk the beat list — wherever `next.start < prev.end + 0.7`, merge into one `MG_PERIODS` entry and cross-fade content inside the same continuous curtain.
 
-**Concrete example (Ad_5 Beat 2 — what NOT to do, then the fix):**
+For each beat, in the combined plan table, add a "key phrase" column showing:
+- The exact phrase from the visual (e.g. "MATH STOPPED WORKING")
+- The transcript span where it's spoken (e.g. "33.76–35.34s")
+- The proposed window (e.g. "32.0–36.5s")
+- A pass/fail check (does window cover phrase + 0.3s tail?)
 
-> **Wrong:** `{s: 16.0, e: 19.0}`. The footer "THAT'S HOW THEY PAY RENT & STAFF" exits at 19.0 — but speaker says "rent" at 19.75 and "staff" at 21.18. Visual disappears as words are spoken.
+Walk the beat list before writing HTML — every row must have a green check.
+
+**Concrete example (Ad_3 — Apr 2026 — the bug pattern this rule fixes):**
+
+> **Wrong:** `img-cpc-chart` window `27.70–31.70`. Image text is "MATH STOPPED WORKING". Speaker says "math stopped working" at 33.76–35.34. Image is gone 2 seconds BEFORE the speaker says it. At 27.70 the speaker is saying "PDF reports and zero new patients" — totally unrelated. Agent anchored to the start of the relevant sentence ("The Google ads") instead of the punchline phrase.
 >
-> **Right:** Last relevant word is "staff" ending at 21.72. New `e = 21.72 + 0.7 = 22.42`. Footer enters at 18.88 (when "That's" starts) as a block, not word-by-word. If next beat starts before 22.42, merge.
+> **Right:** New window `31.5–35.7`. Now the chart is on screen during "Google ads cost per click crept up every quarter until the math stopped working" — the visual confirms the claim as the punchline lands.
+
+> **Wrong (Ad_5 Beat 2):** `{s: 16.0, e: 19.0}`. Footer "THAT'S HOW THEY PAY RENT & STAFF" exits at 19.0 — but speaker says "rent" at 19.75 and "staff" at 21.18.
+>
+> **Right:** Last punchline word is "staff" ending at 21.72. New `e = 21.72 + 0.7 = 22.42`. Footer enters at 18.88 ("That's") as a block. If next beat starts before 22.42, merge.
 
 ### MG coverage budget and pacing (HARD)
 
-**Combined visual coverage target: ≤35% of source duration**, split as **MG ≤25% + cutaway ≤15%**. The reference style (Hormozi / Iman Gadzhi / Mosri) keeps the speaker on screen most of the time, *interrupted often* by short visual beats — not punctuated rarely by long ones.
+**Combined visual coverage target: ≤45% of source duration**, split as **MG ≤25% + cutaway ≤25%**. The reference style (Hormozi / Iman Gadzhi / Mosri) keeps the speaker on screen most of the time, *interrupted often* by short visual beats. The caps were loosened from ≤35%/≤15% in Apr 2026 after the cutaway-hold default moved from 2.5s to a tiered 3.0/4.0s — at the longer holds, the old 15% cap was unreachable with 5+ cutaways. The 45% combined ceiling still keeps the speaker on screen for the majority of runtime; above it, the ad starts reading as a slideshow.
 
 | Constraint | Number | Why |
 |---|---|---|
 | MG coverage | **≤25% of runtime** | Stamps/chips/lists/CTA share this bucket |
-| Cutaway coverage | **≤15% of runtime** | B-roll, full-frame images, reaction zooms — a separate bucket so cheap cutaways don't eat the MG budget |
-| Combined coverage | **≤35% of runtime** | At >40% the speaker disappears and the ad reads as a slideshow |
+| Cutaway coverage | **≤25% of runtime** | Full-frame images, B-roll, reaction zooms. Bumped from ≤15% in Apr 2026 to accommodate the tiered 3.0/4.0s cutaway hold. |
+| Combined coverage | **≤45% of runtime** | At >50% the speaker disappears and the ad reads as a slideshow. Bumped from ≤35% alongside the cutaway cap. |
 | **Max speaker-only stretch** | **≤8s after t=10s (BLOCKING)** | Industry: >4s static = danger zone, >8s = scroll. The opening hook (0–10s) is exempt so the face can carry it |
-| Single MG burst length | **stamps/chips 1.5–3s, lists 3–5s, CTA 5–7s** | Anything longer = cut content, not extend window |
-| Cutaway hold | **0.8–2.0s typical, ≤3s hard** | Vertical short-form b-roll norm; keeps cadence tight |
+| Single MG burst length | **stamps/chips 1.5–3s, lists 3–5s, CTA = full speech window** | CTA must stay on screen through the last spoken CTA word + 0.7s — never exit early |
+| Cutaway hold | **Tiered by content density (validated by Marlon Apr 2026): 4.0s for content-rich infographics (chart/map + headline + sub-label OR 2+ rows of text); 3.0s for simple stamps (single 2-word headline like "DEAD", a lone stat like "76%", no chart). Plain text-free B-roll can drop to 0.8–1.5s.** | Read time must match content complexity. A dense infographic with chart + 2 text lines needs 4 word-reads of dwell. A 2-word stamp doesn't. The earlier 2.5s blanket default was rejected on review (too short for dense images); a blanket 4.0s default blew the coverage budget. Tier by density. |
+| Cutaway count | **~1 cutaway per 13s of source (e.g. ~5 in a 60s ad, ~7 in a 90s ad).** | Companion rule to the cutaway hold tier. With 4.0s holds, this lands cutaway coverage near the 25% cap. If you want a heavier infographic style (lots of cutaways), consider whether the resulting ad still feels like a talking-head — at >30% cutaway coverage the speaker becomes the interruption, not the spine. |
 | Gap between beats | **≥2.5s of clean speaker** | Re-anchors on the face without leaving dead air |
 | Cadence | **8–12 distinct visual beats per minute** | One every 5–7s. Below 8 reads as static; above 12 strobes |
 | **First MG entry** | **NEVER before t=5s. Default 5–7s.** | Opening hook lands on the face; an MG opener gets scrolled past |
 
-**This is a workflow gate.** After identifying narrative pivots from the transcript, build a beat budget table BEFORE writing any HTML and verify it sums to ≤35%:
+**This is a workflow gate.** After identifying narrative pivots from the transcript, build a beat budget table BEFORE writing any HTML and verify it sums to ≤45%:
 
 ```
 | Beat | s     | e     | duration | type            |
@@ -316,16 +362,33 @@ Most 60–90s talking-head ads land at **3–5 beats total**. Six is a lot. Eigh
 - **Payoff numbers** — "100% yours", "$50k a month", "12 patients a week"
 - **CTA + benefits block** — closing 8–12 seconds, what they'll see when they click
 
-Aim for a roughly even rhythm of speaker-only / speaker-with-chip / speaker-ghosted-behind-full-MG. If three full-frame MG beats fire back-to-back with no breath in between, the face disappears for too long — break them up.
+Aim for a roughly even rhythm of speaker-only / speaker-with-chip / speaker-with-full-MG. If three full-frame MG beats fire back-to-back with no breath in between, the face disappears for too long — break them up.
 
-### Two MG patterns
+### MG layout patterns
 
-| Pattern | Use for | Video opacity | MG layout |
+The speaker always stays at full brightness (opacity 1.0). The distinction between "light" and "full" MG is purely about the size and visual weight of the dark plate:
+
+| Pattern | Use for | MG plate | MG layout |
 |---|---|---|---|
-| **Ghost** (default) | Big narrative beats: niche reveal, full contrast, compound system, payoff, CTA + benefits | ~22% with dark gradient overlay | Full-frame, content centered in safe zone |
-| **Overlay** | Quick callouts: a single number, a 2-second word stamp, a side label | 100% (no fade) | Corner chip, lower-third bar, or floating element — *outside* the head's bounding box |
+| **Full plate** | Big narrative beats: niche reveal, full contrast, compound system, payoff, CTA + benefits | Large dark rounded card `rgba(10,10,14,0.82)` | Lower half safe zone, anchored `top ≥ 960` |
+| **Chip / overlay** | Quick callouts: a single number, a 2-second word stamp, a side label | Smaller compact plate | Corner chip, lower-third bar — *outside* the head's bounding box, `top ≥ 960` |
 
-For each beat, pick the pattern that matches the narrative weight. If unsure, default to Ghost.
+For each beat, pick the plate weight that matches the narrative weight. Both keep the speaker at full brightness.
+
+### MG copy for mobile (HARD — validate every beat against this)
+
+Facebook/Instagram viewers are on a phone at arm's length. MG copy must pass a "1-second read" test: if a viewer can't absorb every word in under 1 second, the copy is too long or too dense. Marlon validated this on Ad_2 — eyebrows + headlines + subs + footers stacked together were unreadable at normal scroll speed.
+
+**Rules:**
+
+1. **2 text elements max per MG block** — headline + one sub line. Drop the eyebrow. Drop the footer. The only exception is the CTA block, which may have headline + sub + short footer (3 lines), but all must be ≤5 words each.
+2. **Each line ≤5 words.** "WALK IN WITHIN 24 HRS" (5 words) ✓. "of near-me searchers walk in within 24 hours" (8 words) ✗.
+3. **All caps, large font.** Sub lines at `font-size: 38px` minimum. If you feel tempted to go below 34px to make content fit, you have too much content — cut a line, don't shrink the font.
+4. **Drop the beat entirely before adding more lines.** The captions already say what the speaker is saying. An MG needs to add ONE punchy visual emphasis, not a full re-statement with context.
+
+**The "could a 9-year-old read this in 1 second?" test:** if not, cut until they could.
+
+**Eyebrows and footers are almost always wrong.** They were originally included because long-form web design uses them for hierarchy. On 9:16 mobile video ads, the viewer doesn't have time to read hierarchy — they need one thing, said once, in big type. Eyebrows ("THE STAT", "THE MATH") add zero information the viewer doesn't already get from the headline and the speaker's audio. Footers re-state what the speaker is about to say next — the captions will do that. Default: no eyebrow, no footer.
 
 ### Default palette (healthcare audience)
 
@@ -349,8 +412,8 @@ The HyperFrames compiler embeds these automatically — just declare them in CSS
 
 The skill has two visual treatments that punctuate the speaker:
 
-- **Cutaway image** — full-frame still that **fully replaces the speaker** for 1.5–3s. Generated by kie.ai `gpt-image-2` at 1K, sized to source aspect ratio. Track-index 2, fades in/out via GSAP. Audio underneath never changes.
-- **Motion graphic** — text/layout block over a ghosted speaker (~55% video opacity, light dim overlay). Built in HTML/GSAP. Speaker visible, face holds trust.
+- **Cutaway image** — full-frame still that **fully replaces the speaker**. Hold time tiered by content density: **4.0s for content-rich infographics** (chart/map + headline + sub-label, OR 2+ rows of text); **3.0s for simple stamps** (single 2-word headline, lone stat, single icon + label); **0.8–1.5s for plain text-free B-roll**. Generated by kie.ai `gpt-image-2` at 1K, sized to source aspect ratio. Track-index 2, fades in/out via GSAP. Audio underneath never changes.
+- **Motion graphic** — text/layout block with its own dark plate over a **full-brightness speaker** (video opacity stays 1.0 throughout). Built in HTML/GSAP. Speaker fully visible, face holds trust.
 
 They are NOT interchangeable. Each is the right tool for a different *kind* of beat. (Validated by Mayer's Cognitive Theory of Multimedia Learning: visual + verbal must converge on meaning; when they duplicate, they cost cognitive load instead of adding to it.)
 
@@ -359,9 +422,9 @@ They are NOT interchangeable. Each is the right tool for a different *kind* of b
 | Beat is about... | Use | Why |
 |---|---|---|
 | A **concrete thing** the speaker names (map, real chart, screenshot, photo, place, product) | **Cutaway image** | Image *shows* the thing — text alone can't substitute |
-| An **abstract claim, number, list, or stamp** | **Motion graphic** | Kinetic typography is the workhorse for direct-response clarity (research-validated). Speaker stays ghosted, face holds trust. |
-| The **CTA** at close | **MG always** | Speaker face must be visible (ghosted) during the conversion ask — a cutaway here removes the trust anchor at the worst moment |
-| The **25–35s pattern interrupt** | **Cutaway preferred** | The drop-off cliff demands the biggest visual change. Speaker → cutaway is more abrupt than speaker → ghosted+MG. Use the heaviest tool exactly here. |
+| An **abstract claim, number, list, or stamp** | **Motion graphic** | Kinetic typography is the workhorse for direct-response clarity (research-validated). Speaker stays at full brightness, face holds trust. |
+| The **CTA** at close | **MG always** | Speaker face must be visible (full brightness) during the conversion ask — a cutaway here removes the trust anchor at the worst moment |
+| The **25–35s pattern interrupt** | **Cutaway preferred** | The drop-off cliff demands the biggest visual change. Speaker → cutaway is a harder cut than speaker+MG. Use the heaviest tool exactly here. |
 
 Concrete examples:
 - "ranking #1 in Sydney" → **cutaway** (rank map with pins)
@@ -384,10 +447,10 @@ speaker → MG → speaker → cutaway → speaker → MG → speaker → cutawa
 ```
 
 Rules:
-- **Never two cutaways in a row.** ≥2.5s of speaker (or ghosted+MG) between cutaways. Two cutaways back-to-back kills the talking-head premise — viewers need the face to recover.
+- **Never two cutaways in a row.** ≥2.5s of speaker (or speaker+MG) between cutaways. Two cutaways back-to-back kills the talking-head premise — viewers need the face to recover.
 - **Never two MGs in a row without a speaker beat.** If two narrative beats are both MG-shaped, merge them into one continuous MG window with a content cross-fade (existing pattern).
 - **Always open on face.** First 5s = speaker + caption only. No cutaway, no MG.
-- **Always close on face.** CTA is an MG (face ghosted, visible) — never a cutaway.
+- **Always close on face.** CTA is an MG (face fully visible, full brightness) — never a cutaway.
 
 ### What neither tool is for
 
@@ -480,19 +543,19 @@ Research consensus for short-form vertical ads in 2025/2026 (Buttercut, Visla, B
 - 3–30s window → visual change every **8–12s**
 - **Mandatory pattern interrupt at 25–35s** — and it should be a **cutaway**, not an MG (drop-off cliff demands the biggest possible visual change)
 - 35s–end → visual change every **15–25s**
-- Always close on face — CTA is an MG (face ghosted, visible), never a cutaway
+- Always close on face — CTA is an MG (face at full brightness, visible), never a cutaway
 
-The skill enforces a **split budget** — MG ≤25% and cutaway ≤15%, combined ≤35%. Separate buckets so adding cheap short cutaways doesn't eat the MG budget.
+The skill enforces a **split budget** — MG ≤25% and cutaway ≤25%, combined ≤45%. Separate buckets so cutaway and MG counts can be tracked independently.
 
 | Rule | Value | Notes |
 |---|---|---|
 | Open the video | Always speaker + caption | Never open with cutaway or MG |
 | First visual beat (cutaway OR MG) | ≥ 5s, default 5–8s | Hook lands on the face |
-| **Cutaway duration** | **0.8–2.0s** typical, ≤3s hard | Vertical short-form b-roll norm; keeps cadence tight |
+| **Cutaway duration** | **1.8–2.5s** typical for AI-generated infographic images; ≤3s hard cap | 1.8s is the minimum for info-rich images (maps, stat cards, SERP screenshots). Simple B-roll can go shorter. |
 | MG duration | stamps 1.5–3s, lists 3–5s, CTA 5–7s | Existing tiers — research-aligned |
 | **MG bucket** | **≤25% of runtime** | Stamps, chips, lists, CTA |
-| **Cutaway bucket** | **≤15% of runtime** | B-roll, full-frame images, reaction zooms |
-| **Combined coverage cap** | **≤35% of runtime** | Sum of MG + cutaway buckets |
+| **Cutaway bucket** | **≤25% of runtime** | B-roll, full-frame images, reaction zooms |
+| **Combined coverage cap** | **≤45% of runtime** | Sum of MG + cutaway buckets |
 | Gap between any two visual beats | ≥ 2.5s clean speaker | Spans cutaway↔cutaway (face recovery), MG↔MG, cutaway↔MG |
 | **Max speaker-only stretch** | **≤8s after t=10s (BLOCKING)** | Industry: >4s static = danger zone, >8s = scroll |
 | **25–35s pattern interrupt** | mandatory; **cutaway preferred** | The drop-off cliff — biggest available visual change |
@@ -572,9 +635,16 @@ Gates (BLOCKING — fix the plan, don't write HTML against a failing budget):
        image-plan.json --source source.mp4
    ```
    Verify each PNG at `images/{id}.png` opens cleanly. The MG rows are now the locked spec for HTML authoring — copy, types, palettes, timestamps. Re-runs are idempotent; pass `--force` to regenerate a specific cutaway after Marlon revises its prompt.
-6. **Combined beat budget gate (BLOCKING).** Verify the gates from "Cadence + combination rules" against the approved table. Sum durations: **if total > 35% of source duration, drop beats until ≤35%.** Verify: first beat ≥ 5s, every gap ≥ 3s, every burst within length limits, 25–35s window contains a beat (cutaway preferred), no two cutaways in a row, CTA is MG, **first-30s gate: ≥ 2 beats start before t=30s** (front-loading rule). If any check fails, fix the beat list before writing HTML.
+6. **Combined beat budget gate (BLOCKING).** Verify the gates from "Cadence + combination rules" against the approved table. Sum durations: **if total > 45% of source duration, drop beats until ≤45%.** Verify: first beat ≥ 5s, every gap ≥ 3s, every burst within length limits, 25–35s window contains a beat (cutaway preferred), no two cutaways in a row, CTA is MG, **first-30s gate: ≥ 2 beats start before t=30s** (front-loading rule). If any check fails, fix the beat list before writing HTML.
+
+6b. **Punchline-coverage gate (BLOCKING).** For every beat, run the punchline-coverage test from "Timing — anchor every visual to its PUNCHLINE phrase":
+   - Identify the visual's **key phrase** (MG headline / on-image text / stat / CTA imperative).
+   - Find when the speaker actually says that phrase in the transcript — record `key_phrase.start` and `key_phrase.end`.
+   - Verify `data-start ≤ key_phrase.start` AND `data-start + data-duration ≥ key_phrase.end + 0.3s`.
+   - If a beat fails, apply the three-option fix: (1) move the window, (2) rewrite the visual's text to match the chosen window, or (3) drop the beat. Then re-check gap rule and max-static rule.
+   - This gate has caught: visuals exiting before the punchline lands (the most common bug in shipped Ad 3 v1 — `img-cpc-chart` exited 2s before "math stopped working" was spoken). Punchline coverage is more important than the 2.5s gap rule when they conflict.
 7. **Write `DESIGN.md`** — short file with palette, typography, safe-zone reminder, and what-not-to-do. The `hyperframes` skill enforces this gate.
-8. **Build `index.html`** — see the `ad-marketing-truth/my-video/index.html` reference. Pattern: video element + audio element + MG curtain + MG chips + **image takeovers (`<img class="story-image">`, see "Image elements in the composition")** + captions container, all timed via `data-start` / `data-duration` / `data-track-index`. Every MG block at `top ≥ 960` unless it's a full-screen takeover stamp. Image elements are full-frame (`inset: 0; object-fit: cover`) on track-index 2, fade in/out via GSAP. Update the caption skip-check to use `VISUAL_PERIODS = [...MG_PERIODS, ...IMAGE_PERIODS]` so captions hide during image windows too.
+8. **Build `index.html`** — see the `ad-marketing-truth/my-video/index.html` reference. Pattern: video element + audio element + MG blocks (each with its own dark plate) + **image takeovers (`<img class="story-image">`, see "Image elements in the composition")** + captions container, all timed via `data-start` / `data-duration` / `data-track-index`. Every MG block at `top ≥ 960`. Video element stays at opacity 1.0 throughout — no curtain, no dim. Image elements are full-frame (`inset: 0; object-fit: cover`) on track-index 2, fade in/out via GSAP. Update the caption skip-check to use `VISUAL_PERIODS = [...MG_PERIODS, ...IMAGE_PERIODS]` so captions hide during image windows too.
 9. **Source integrity verification (BLOCKING).** Run `ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 source.mp4` and confirm:
    - Root `data-duration` ≥ source duration
    - `<video>` `data-duration` ≥ source duration AND `data-start="0"`
@@ -624,14 +694,14 @@ If `validate` warns about sparse keyframes in the source video, recommend re-enc
 
 The validated reference composition lives at `ad-marketing-truth/my-video/index.html` (relative to the project root). When in doubt, read that file. Specific patterns to copy:
 
-- The `MG_PERIODS` array at the bottom of the script — clean way to declare ghost-mode windows and have the timeline build itself from the data
+- The `MG_PERIODS` array at the bottom of the script — clean way to declare MG windows and have the timeline build itself from the data
 - The caption self-lint loop — runs through every group, seeks past its end, warns if anything's still visible. Catches the "previous caption flashing under the next" bug.
 - The 4:5 safe-zone comment block at the top of the CSS — keep this in every composition as a reminder to whoever edits it next
 
 ## Anti-patterns (don't do these)
 
 - **Don't fully fade the video to opacity 0** — black frames read like ad-end on Facebook scroll.
-- **Don't dim the video too far** — anything below ~0.45 makes the speaker invisible behind a heavy curtain. Marlon validated 0.55 video opacity + ~0.45–0.6 alpha curtain as the right balance: speaker clearly readable, MG copy still pops.
+- **Don't dim the video at all** — never tween `#a-roll` opacity during MG windows. If MG copy isn't readable, the fix is increasing the MG block's plate opacity (`rgba(10,10,14,...)` alpha), not dimming the speaker. Marlon explicitly validated that darkening the speaker looks odd and breaks the trust mechanic.
 - **Don't keep captions visible during full-frame MG** — they compete with MG copy for attention. Hide the parent `#captions` container.
 - **Don't make `#captions` `display: flex` and put `position: absolute` cap-groups inside without `bottom: 0; left: 0; right: 0`** — captions will silently disappear during speaker-only stretches. See "Caption container layout" above for the correct pattern.
 - **Don't cover the speaker's head with captions or lower-third graphics** — captions stay below y=1100, lower-third MG stays in the lower part of the safe zone.
@@ -656,6 +726,10 @@ Common requests after the first render:
 | "Re-do the rank-map cutaway" | Edit that row's `description` in `image-plan.json` (or in chat and re-serialize), then re-run `python3 scripts/generate_images.py image-plan.json --source source.mp4 --force`. The script only re-fetches existing PNGs when `--force` is passed; other ids stay cached. |
 | "Change the MG copy on the stamp at 0:18" | Edit the MG row in chat OR directly in `index.html` — no API call needed. Update the eyebrow / headline / sub / footer to match. |
 | "Add another beat at 0:42" | Add a new row to the combined plan in chat (apply assignment rule for kind), get Marlon's "go". If `kind == cutaway`: append to `image-plan.json`, re-run the generator (idempotent — only the new row hits kie.ai), then add the `<img>` + GSAP tweens + `IMAGE_PERIODS` entry. If `kind == mg`: add the MG block + `MG_PERIODS` entry. Re-verify the combined budget gate. |
+| "Images / MGs weren't on screen long enough, I couldn't read them" | For AI-generated infographic cutaways (maps, stat cards, SERP screens) bump duration to **2.5s** minimum. For MG blocks, verify exit timing is `last_relevant_word_end + 0.7s` — the most common bug is exit being placed at `last_word_start` instead of `last_word_end`. For the CTA specifically, the MG must span the FULL CTA speech window. |
+| "Too much text in the MGs, can't read it on mobile" | Strip to **headline + 1 sub line**, both ≤5 words each. Drop eyebrows and footers — they add hierarchy but viewers don't have time to read hierarchy on a phone. If the remaining 2 lines still feel dense, reduce sub font to 34px and tighten letter-spacing. See "MG copy for mobile" section. |
+| "MGs left too early / disappeared before the point was finished" | Check exit timing: `exit_tween_at = last_relevant_word.end + 0.7s`. Verify `data-duration` covers through the fade-out (exit_at + 0.2s − data-start). Update `MG_PERIODS[n].e` to match. |
+| "MG/image came up too early — by the time he says the matching phrase, the visual is gone" | **Punchline-coverage failure.** The visual was anchored to the start of the speaker's *sentence* (lead-in) instead of to the *punchline phrase* the visual encodes. Run the punchline-coverage test: find when the speaker actually says the visual's headline/on-image text in the transcript (`key_phrase.start–end`), then re-anchor so `data-start ≤ key_phrase.start` AND `data-start + data-duration ≥ key_phrase.end + 0.3s`. If the punchline doesn't fit the window, EITHER move the window OR rewrite the visual's text to match what's spoken in the chosen window. See "Timing — anchor every visual to its PUNCHLINE phrase" for the full rule. |
 | "Image looks wrong / cropped weirdly" | First check the PNG's actual dims with `ffprobe images/{id}.png` — if the model returned an off-ratio image, the prompt's vertical-composition hint may be too weak; tighten the description (e.g. "all key content in the vertical center column"). `object-fit: cover` will crop sides on a too-wide image. |
 | "This beat should have been a cutaway, not an MG (or vice versa)" | Re-apply the assignment rule: concrete thing = cutaway, abstract claim = MG, CTA = MG, 25–35s = cutaway preferred. Swap the row's `kind`, regenerate the plan, get re-approval before changing HTML. |
 | "Two cutaways feel jarring back-to-back" | That's the rotation rhythm rule firing — never two cutaways in a row. Convert one to MG, drop one, or insert a speaker beat ≥2.5s between them. |
