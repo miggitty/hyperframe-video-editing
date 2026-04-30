@@ -15,8 +15,7 @@ A HyperFrames-based pipeline for turning Marlon's raw talking-head footage (in `
   - `transcript.json` — whisper word-level timings (used to anchor captions and visual beats)
   - `image-plan.json` — kie.ai cutaway prompts + start/duration
   - `images/` — generated cutaway PNGs (idempotent; only `--force` re-fetches)
-  - `renders/` — final MP4 outputs
-- `output/` — final ads renamed for delivery (e.g. `Ad 1 - The New Opportunity.mp4`)
+  - `renders/` — final MP4 outputs (named e.g. `Ad 1 - The New Opportunity.mp4`)
 - `.claude/skills/` — installed HyperFrames skills + the custom `how-to-edit-videos` skill that encodes the editorial style
 
 ## Critical: invoke the `how-to-edit-videos` skill before ANY ad-editing work
